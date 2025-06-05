@@ -9,24 +9,55 @@ import { XmlEditorPanel } from '@/components/editor/xml-editor-panel';
 import { PropertyEditorPanel } from '@/components/panels/property-editor-panel';
 import { OptimizationToolPanel } from '@/components/panels/optimization-tool-panel';
 import { SettingsPanel } from '@/components/panels/settings-panel';
-import { BlueprintPanel } from '@/components/editor/blueprint-panel'; // Placeholder for Blueprint
+import { BlueprintPanel } from '@/components/editor/blueprint-panel';
 import { suggestLayoutOptimizations } from '@/ai/flows/suggest-layout-optimizations';
 import { useToast } from "@/hooks/use-toast";
 import type { SelectedComponentInfo, CustomComponentDefinition, ScreenDefinition } from '@/features/androviz/types';
 import { INITIAL_XML_CODE, SCREEN_PREVIEWS } from '@/features/androviz/constants';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Download } from 'lucide-react';
+
+const parseAttributesFromXml = (xml: string, elementId: string): Record<string, string> => {
+  const attributes: Record<string, string> = {};
+  // Regex to find the start of the tag by its android:id
+  // This looks for <elementName ... android:id="@+id/elementId" ... >
+  // It captures the opening part of the tag.
+  const elementRegex = new RegExp(`<([\\w.]+)[^>]*android:id="@+id/${elementId}"([^>]*)>`, 's');
+  const match = xml.match(elementRegex);
+
+  if (match && match[0]) {
+    const fullTagOpening = match[0]; // The entire opening tag, e.g., <TextView ...> or <ImageView ... />
+    
+    // Regex to find attributes within the tag: attributeName="attributeValue"
+    // It handles attributes with namespaces like android:text or app:layout_constraintTop_toTopOf
+    const attrRegex = /([\w:.-]+)\s*=\s*"([^"]*)"/g;
+    let attrMatch;
+    while ((attrMatch = attrRegex.exec(fullTagOpening)) !== null) {
+      attributes[attrMatch[1]] = attrMatch[2];
+    }
+  }
+  return attributes;
+};
+
 
 const updateAttributeInXml = (xml: string, elementId: string, attribute: string, newValue: string): string => {
-  const regex = new RegExp(`(<\\w+.*?android:id="@+id/${elementId}".*?${attribute}=")(.*?)(".*?>)`, 's');
-  if (xml.match(regex)) {
-    return xml.replace(regex, `$1${newValue}$3`);
+  // Regex to find the element and the specific attribute
+  // It looks for <anyTag ... android:id="@+id/elementId" ... someAttribute="oldValue" ... >
+  // And replaces someAttribute="oldValue" with someAttribute="newValue"
+  const attributeRegex = new RegExp(`(<\\w+[^>]*android:id="@+id/${elementId}"[^>]*?${attribute}=)"([^"]*)"([^>]*>)`, 's');
+  
+  if (xml.match(attributeRegex)) {
+    return xml.replace(attributeRegex, `$1"${newValue}"$3`);
   }
-  const findElementRegex = new RegExp(`(<\\w+.*?android:id="@+id/${elementId}".*?)>`, 's');
+  
+  // If attribute doesn't exist, try to add it.
+  // This finds the opening tag by id: <anyTag ... android:id="@+id/elementId" ... >
+  // And adds the new attribute="newValue" before the closing > or />
+  const findElementRegex = new RegExp(`(<\\w+[^>]*android:id="@+id/${elementId}"[^>]*?)(\\s*/?>)`, 's');
   if (xml.match(findElementRegex)) {
-    return xml.replace(findElementRegex, `$1 ${attribute}="${newValue}">`);
+    return xml.replace(findElementRegex, `$1 ${attribute}="${newValue}"$2`);
   }
-  console.warn(`Could not update attribute '${attribute}' for element '${elementId}'. XML parsing needed for robust updates.`);
+
+  console.warn(`Could not update/add attribute '${attribute}' for element '${elementId}'. XML parsing needed for robust updates.`);
   return xml;
 };
 
@@ -64,7 +95,7 @@ const addSnippetToXml = (currentXml: string, snippet: string): string => {
         }
     }
   }
-
+  
   if (insertIndex !== -1) {
     const snippetLines = snippet.trim().split('\n');
     const indentedSnippet = snippetLines.map(line => `${bestTagIndent}    ${line}`).join('\n');
@@ -95,7 +126,6 @@ export default function AndroVizPage() {
 
   const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(false);
   const [autoSaveInterval, setAutoSaveInterval] = useState<number>(3000);
-
 
   const { toast } = useToast();
 
@@ -143,20 +173,29 @@ export default function AndroVizPage() {
 
   const handleSelectElement = useCallback((elementId: string | null) => {
     if (elementId) {
-      let type = 'View';
-      const match = xmlCode.match(new RegExp(`<(\\w+).*?android:id="@+id/${elementId}"`));
+      let type = 'View'; // Default type
+      const parsedAttributes = parseAttributesFromXml(xmlCode, elementId);
+      
+      // Try to determine type from the tag name in parsed attributes (if any attribute was parsed)
+      // This requires the parsing to capture the tag name itself or a more complex regex.
+      // For now, let's use a simpler type detection based on id, similar to before,
+      // but ensure parsedAttributes are prioritized.
+      const match = xmlCode.match(new RegExp(`<([\\w.]+).*?android:id="@+id/${elementId}"`));
       if (match && match[1]) {
         type = match[1];
       } else if (elementId.includes('text')) type = 'TextView';
       else if (elementId.includes('button')) type = 'Button';
       else if (elementId.includes('image')) type = 'ImageView';
+      // Add more sophisticated type detection if needed
 
       setSelectedComponent({
         id: elementId,
         type: type,
-        attributes: {},
+        attributes: parsedAttributes, // Use attributes parsed from current xmlCode
       });
-       if (activeMainTab !== "properties") setActiveMainTab("properties");
+       if (activeMainTab !== "properties" && activeMainTab !== "visual" && activeMainTab !== "blueprint") {
+         setActiveMainTab("properties");
+       }
     } else {
       setSelectedComponent(null);
     }
@@ -164,16 +203,29 @@ export default function AndroVizPage() {
 
   const handlePropertyChange = useCallback((attribute: string, value: string) => {
     if (selectedComponent) {
-      setXmlCode(prevXml => updateAttributeInXml(prevXml, selectedComponent.id, attribute, value));
-      setSelectedComponent(prev => prev ? ({...prev, attributes: {...prev.attributes, [attribute]: value}}) : null);
-       toast({ title: "Property Changed", description: `Attribute ${attribute} for ${selectedComponent.id} set to ${value}.` });
+      const newXml = updateAttributeInXml(xmlCode, selectedComponent.id, attribute, value);
+      setXmlCode(newXml); // This will trigger re-render and pass new xmlCode to panels
+      
+      // Also update the selectedComponent's attributes directly for immediate UI feedback in PropertyEditorPanel
+      // before a potential re-selection might re-parse.
+      setSelectedComponent(prev => {
+        if (!prev) return null;
+        const updatedAttributes = { ...prev.attributes, [attribute]: value };
+        return { ...prev, attributes: updatedAttributes };
+      });
+
+      toast({ title: "Property Changed", description: `Attribute ${attribute} for ${selectedComponent.id} set to ${value}.` });
     }
-  }, [selectedComponent, toast]);
+  }, [selectedComponent, toast, xmlCode]);
 
   const handleAddComponent = useCallback((xmlSnippet: string) => {
     setXmlCode(prevXml => addSnippetToXml(prevXml, xmlSnippet));
     setActiveMainTab("xml");
-  }, []);
+    toast({
+      title: "Component Added",
+      description: "Snippet inserted into XML. Switch to XML Editor tab to see changes.",
+    });
+  }, [toast]);
 
   const handleScreenSelection = useCallback((screenId: string) => {
     setSelectedScreenId(screenId);
@@ -196,7 +248,7 @@ export default function AndroVizPage() {
       });
       return;
     }
-    setSelectedScreenId('custom'); // Ensure 'custom' is selected if applying custom
+    setSelectedScreenId('custom'); 
     setCurrentPreviewWidth(customWidthInput);
     setCurrentPreviewHeight(customHeightInput);
     toast({
@@ -204,7 +256,7 @@ export default function AndroVizPage() {
       description: `Preview set to ${customWidthInput} x ${customHeightInput}.`,
     });
   }, [customWidthInput, customHeightInput, toast]);
-
+  
   const handleSaveXml = useCallback(() => {
     const blob = new Blob([xmlCode], { type: 'application/xml' });
     const link = document.createElement('a');
@@ -216,6 +268,18 @@ export default function AndroVizPage() {
     URL.revokeObjectURL(link.href);
     toast({ title: "XML Saved", description: "layout.xml has been downloaded." });
   }, [xmlCode, toast]);
+
+  // Effect to re-parse attributes if selected component ID is stable but XML code changes
+  useEffect(() => {
+    if (selectedComponent?.id) {
+        const parsedAttributes = parseAttributesFromXml(xmlCode, selectedComponent.id);
+        // Only update if parsed attributes are different to avoid infinite loops if parsing is unstable
+        if (JSON.stringify(parsedAttributes) !== JSON.stringify(selectedComponent.attributes)) {
+             setSelectedComponent(prev => prev ? ({...prev, attributes: parsedAttributes}) : null);
+        }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [xmlCode, selectedComponent?.id]);
 
 
   return (
@@ -242,7 +306,7 @@ export default function AndroVizPage() {
           />
         </TabsContent>
         <TabsContent value="blueprint" className="flex-1 overflow-y-auto p-4 m-0">
-          <BlueprintPanel xmlCode={xmlCode} previewWidth={currentPreviewWidth} previewHeight={currentPreviewHeight} />
+           <BlueprintPanel xmlCode={xmlCode} previewWidth={currentPreviewWidth} previewHeight={currentPreviewHeight} onSelectElement={handleSelectElement}/>
         </TabsContent>
         <TabsContent value="xml" className="flex-1 overflow-y-auto p-0 m-0">
           <XmlEditorPanel xmlCode={xmlCode} setXmlCode={setXmlCode} />
@@ -255,7 +319,7 @@ export default function AndroVizPage() {
           />
         </TabsContent>
         <TabsContent value="properties" className="flex-1 overflow-y-auto p-4 m-0">
-           <PropertyEditorPanel selectedComponent={selectedComponent} onPropertyChange={handlePropertyChange}/>
+           <PropertyEditorPanel selectedComponent={selectedComponent} onPropertyChange={handlePropertyChange} xmlCode={xmlCode}/>
         </TabsContent>
         <TabsContent value="optimize" className="flex-1 overflow-y-auto p-4 m-0">
           <OptimizationToolPanel
