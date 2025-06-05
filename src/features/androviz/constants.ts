@@ -1,5 +1,5 @@
 import type { AndroidComponentDefinition } from './types';
-import { Button, Type, Image as ImageIcon, BoxSelect, Maximize, Columns } from 'lucide-react'; // Using BoxSelect for Layouts, Maximize for ConstraintLayout, Columns for LinearLayout
+import { Type, Image as ImageIcon, BoxSelect, Maximize, Columns, RectangleHorizontal } from 'lucide-react'; // Using BoxSelect for Layouts, Maximize for ConstraintLayout, Columns for LinearLayout
 
 export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
@@ -20,7 +20,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'button',
     name: 'Button',
-    icon: Button,
+    icon: RectangleHorizontal, // Changed from Button
     defaultXmlSnippet: `<Button
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
