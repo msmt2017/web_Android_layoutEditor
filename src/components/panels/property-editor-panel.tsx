@@ -8,73 +8,97 @@ import { Label } from '@/components/ui/label';
 import { ListChecks } from 'lucide-react';
 import type { SelectedComponentInfo } from '@/features/androviz/types';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
+import { Button } from '@/components/ui/button'; // Added Button for potential future actions
 
 interface PropertyEditorPanelProps {
   selectedComponent: SelectedComponentInfo | null;
   onPropertyChange: (attribute: string, value: string) => void; 
 }
 
-// Mock function to extract attributes. In reality, this would involve XML parsing.
 const getMockAttributes = (componentId: string | null, componentType: string | null): Record<string, string> => {
-  if (componentId === 'welcome_text' || componentType === 'TextView') {
-    return {
-      'android:id': `@+id/${componentId || 'welcome_text'}`,
+  if (!componentId) return {};
+
+  let baseAttributes: Record<string, string> = {
+    'android:id': `@+id/${componentId}`,
+    'android:layout_width': 'wrap_content',
+    'android:layout_height': 'wrap_content',
+    'android:layout_margin': '0dp',
+    'android:padding': '0dp',
+    'android:visibility': 'visible',
+  };
+
+  if (componentType === 'TextView' || componentId.includes('text')) {
+    baseAttributes = {
+      ...baseAttributes,
+      'android:text': 'Sample Text',
+      'android:textSize': '16sp',
+      'android:textColor': '#000000',
+      'android:fontFamily': 'sans-serif',
+      'android:gravity': 'left', // Common for TextView
+      'android:background': '#00000000' // Transparent background
+    };
+  } else if (componentType === 'Button' || componentId.includes('button')) {
+    baseAttributes = {
+      ...baseAttributes,
+      'android:text': 'Button',
+      'android:background': '?attr/colorPrimary', // Example theme attribute
+    };
+  } else if (componentType === 'ImageView' || componentId.includes('image')) {
+    baseAttributes = {
+      ...baseAttributes,
+      'android:layout_width': '100dp',
+      'android:layout_height': '100dp',
+      'android:src': '@drawable/ic_placeholder',
+      'android:contentDescription': 'Image',
+      'android:scaleType': 'centerCrop',
+    };
+  } else if (componentType === 'EditText') {
+     baseAttributes = {
+      ...baseAttributes,
+      'android:layout_width': 'match_parent',
+      'android:hint': 'Enter text',
+      'android:inputType': 'text',
+    };
+  }
+   // If specific ID is welcome_text, override with its known mock values
+  if (componentId === 'welcome_text') {
+     return {
+      'android:id': `@+id/welcome_text`,
       'android:layout_width': 'wrap_content',
       'android:layout_height': 'wrap_content',
       'android:text': 'Welcome to AndroViz!',
       'android:textSize': '24sp',
-      'android:textColor': '#FF6A5ACD', // Example color
+      'android:textColor': '#FF6A5ACD',
       'android:padding': '16dp',
-      'android:fontFamily': 'sans-serif-medium', // Example font
+      'android:fontFamily': 'sans-serif-medium',
       'android:layout_centerHorizontal': 'true',
       'android:layout_marginTop': '50dp',
     };
   }
-  if (componentId === 'action_button' || componentType === 'Button') {
-    return {
-      'android:id': `@+id/${componentId || 'action_button'}`,
-      'android:layout_width': 'wrap_content',
-      'android:layout_height': 'wrap_content',
-      'android:text': 'Get Started',
-      'android:background': '?attr/colorPrimary', // Example theme attribute
-      'android:layout_below': '@id/welcome_text',
-      // ... other attributes
-    };
-  }
-   if (componentId === 'placeholder_image' || componentType === 'ImageView') {
-    return {
-      'android:id': `@+id/${componentId || 'placeholder_image'}`,
-      'android:layout_width': '150dp',
-      'android:layout_height': '150dp',
-      'android:src': '@drawable/placeholder_icon',
-      'android:contentDescription': 'Placeholder Image',
-      'android:scaleType': 'centerCrop',
-    };
-  }
-  // For other or generic selections, provide a minimal set
-  if (componentId) {
-    return {
-      'android:id': `@+id/${componentId}`,
-      'android:layout_width': 'wrap_content',
-      'android:layout_height': 'wrap_content',
-    }
-  }
-  return {};
+
+
+  return baseAttributes;
 };
 
-// Illustrative placeholders/tooltips
 const attributeHints: Record<string, string> = {
-  'android:layout_width': 'Use "match_parent", "wrap_content", or a dimension (e.g., 100dp).',
-  'android:layout_height': 'Use "match_parent", "wrap_content", or a dimension (e.g., 100dp).',
-  'android:padding': 'Dimension value (e.g., 16dp). Uniform padding.',
-  'android:textSize': 'Dimension value in sp (e.g., 16sp).',
-  'android:textColor': 'Color value (e.g., #FF0000) or resource (e.g., @color/my_color).',
-  'android:text': 'String value or resource (e.g., @string/my_string).',
-  'android:src': 'Drawable resource (e.g., @drawable/my_icon).',
-  'android:background': 'Color or drawable resource.',
-  'android:visibility': 'Visible, invisible, or gone.',
+  'android:id': 'Unique identifier for the view (e.g., @+id/my_view).',
+  'android:layout_width': 'Layout dimension: "match_parent", "wrap_content", or exact (e.g., 100dp).',
+  'android:layout_height': 'Layout dimension: "match_parent", "wrap_content", or exact (e.g., 100dp).',
+  'android:layout_margin': 'Uniform margin (e.g., 16dp). For specific sides: layout_marginTop, etc.',
+  'android:padding': 'Uniform padding (e.g., 8dp). For specific sides: paddingTop, etc.',
+  'android:visibility': 'Control visibility: "visible", "invisible", or "gone".',
+  'android:textSize': 'Text size in scalable pixels (e.g., 16sp).',
+  'android:textColor': 'Text color (e.g., #FF0000, @color/my_color).',
+  'android:text': 'String value or resource (e.g., "Hello", @string/my_string).',
+  'android:hint': 'Hint text for EditText (e.g., "Enter your name").',
+  'android:inputType': 'Type of input for EditText (e.g., "text", "numberPassword").',
+  'android:src': 'Drawable resource for ImageView (e.g., @drawable/my_icon).',
+  'android:background': 'Color or drawable resource for background (e.g., #FFFFFF, @drawable/bg_gradient).',
+  'android:scaleType': 'Controls how image is scaled/positioned in ImageView (e.g., "centerCrop", "fitXY").',
   'android:orientation': 'For LinearLayout: "horizontal" or "vertical".',
+  'android:gravity': 'Specifies how an object should position its content (e.g., "center", "left|top").',
+  'android:layout_centerHorizontal': 'RelativeLayout/ConstraintLayout: true to center horizontally.',
+  'android:layout_marginTop': 'Margin on the top edge (e.g., 20dp).'
 };
 
 
@@ -92,42 +116,54 @@ export function PropertyEditorPanel({ selectedComponent, onPropertyChange }: Pro
         <ScrollArea className="h-full pr-2">
           {selectedComponent ? (
             <div className="space-y-4">
-              <p className="text-sm font-medium">Selected: <span className="font-mono text-primary">{selectedComponent.id || 'Unknown'}</span> ({selectedComponent.type})</p>
+              <div className="p-3 bg-accent rounded-md border border-border">
+                 <h3 className="text-sm font-semibold">Selected: <span className="font-mono text-primary">{selectedComponent.id || 'Unknown'}</span></h3>
+                 <p className="text-xs text-muted-foreground">Type: {selectedComponent.type || 'View'}</p>
+              </div>
+             
               {Object.entries(attributes).map(([key, value]) => (
                 <div key={key} className="space-y-1">
-                  <Label htmlFor={key} className="text-xs text-muted-foreground">{key}</Label>
-                  <Tooltip delayDuration={300}>
+                  <Label htmlFor={key} className="text-xs font-medium text-muted-foreground">{key}</Label>
+                  <Tooltip delayDuration={200}>
                     <TooltipTrigger asChild>
                       <Input
                         id={key}
-                        value={value}
+                        value={selectedComponent.attributes[key] || value} // Prefer live attribute if available, else mock
                         onChange={(e) => handleInputChange(key, e.target.value)}
-                        className="h-8 text-sm font-code"
-                        placeholder={attributeHints[key] ? 'e.g. ' + attributeHints[key].split(',')[0].split(' ')[1] : "Enter value"}
+                        className="h-9 text-sm font-code bg-card focus:border-primary"
+                        placeholder={attributeHints[key] ? attributeHints[key].split(':')[0] : "Enter value"}
                       />
                     </TooltipTrigger>
                     {attributeHints[key] && (
-                      <TooltipContent side="top" align="start">
-                        <p className="text-xs max-w-xs">{attributeHints[key]}</p>
+                      <TooltipContent side="top" align="start" className="max-w-xs bg-popover text-popover-foreground p-2 rounded-md shadow-lg border text-xs">
+                        <p>{attributeHints[key]}</p>
                       </TooltipContent>
                     )}
                   </Tooltip>
                 </div>
               ))}
               {Object.keys(attributes).length === 0 && selectedComponent.id && !selectedComponent.id.startsWith("custom_") && (
-                  <p className="text-sm text-muted-foreground">No specific mock attributes for this element ID. Generic attributes shown.</p>
+                  <p className="text-sm text-muted-foreground p-4 border border-dashed rounded-md text-center">
+                    No specific attributes defined for <span className="font-mono">{selectedComponent.id}</span>. 
+                    Standard attributes like <code className="font-mono text-xs bg-muted p-1 rounded">android:layout_width</code> can still be edited.
+                  </p>
               )}
                {Object.keys(attributes).length === 0 && selectedComponent.id && selectedComponent.id.startsWith("custom_") && (
-                  <p className="text-sm text-muted-foreground">Custom components currently do not have pre-defined attributes in this editor.</p>
+                  <p className="text-sm text-muted-foreground p-4 border border-dashed rounded-md text-center">
+                    Custom components currently do not have pre-defined attributes in this mock editor. 
+                    You can edit their raw XML.
+                  </p>
               )}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="flex flex-col items-center justify-center h-full text-center p-6 border border-dashed rounded-md">
               <ListChecks className="h-12 w-12 text-muted-foreground mb-4 opacity-50" />
-              <p className="text-sm text-muted-foreground">
-                Select an element in the Visual Editor or XML to see its properties.
+              <p className="text-base font-medium text-foreground">
+                No Component Selected
               </p>
-              <p className="text-xs text-muted-foreground mt-1">(Visual/XML editor interaction is illustrative)</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Select an element in the Visual Editor (mock interaction) or type its ID in the XML to see and edit its properties here.
+              </p>
             </div>
           )}
         </ScrollArea>

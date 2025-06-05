@@ -1,6 +1,6 @@
 
 import { LayoutGrid } from 'lucide-react';
-import { SidebarTrigger } from '@/components/ui/sidebar';
+// import { SidebarTrigger } from '@/components/ui/sidebar'; // SidebarTrigger is removed
 import {
   Menubar,
   MenubarContent,
@@ -14,7 +14,7 @@ export function AppHeader() {
   return (
     <header className="flex h-16 items-center border-b bg-card px-4 md:px-6 shadow-sm shrink-0 justify-between">
       <div className="flex items-center gap-2">
-        <SidebarTrigger />
+        {/* <SidebarTrigger /> // SidebarTrigger is removed */}
         <LayoutGrid className="h-7 w-7 text-primary" />
         <h1 className="text-2xl font-semibold text-foreground font-headline">AndroViz</h1>
       </div>
@@ -45,7 +45,7 @@ export function AppHeader() {
           <MenubarMenu>
             <MenubarTrigger className="font-medium text-sm">View</MenubarTrigger>
             <MenubarContent>
-              <MenubarItem>Toggle Sidebar</MenubarItem>
+              {/* <MenubarItem>Toggle Sidebar</MenubarItem> // Sidebar related item might be removed or repurposed */}
               <MenubarItem>Toggle Fullscreen</MenubarItem>
             </MenubarContent>
           </MenubarMenu>

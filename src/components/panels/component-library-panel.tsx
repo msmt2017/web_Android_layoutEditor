@@ -7,7 +7,7 @@ import type { AndroidComponentDefinition, CustomComponentDefinition } from '@/fe
 import { PanelWrapper } from './panel-wrapper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { GripVertical, LibrarySquare, PlusCircle, Settings2 } from 'lucide-react'; // Added PlusCircle
+import { GripVertical, LibrarySquare, PlusCircle, Settings2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { AddCustomComponentDialog } from '@/components/dialogs/add-custom-component-dialog';
 
@@ -36,10 +36,11 @@ export function ComponentLibraryPanel({ onAddComponent, customComponents, onAddC
     <PanelWrapper 
       title="Component Library" 
       icon={LibrarySquare} 
-      className="h-full flex flex-col"
+      className="h-full flex flex-col" // Ensure panel takes full height if container allows
       action={
-        <Button variant="ghost" size="sm" onClick={() => setIsAddCustomDialogOpen(true)} title="Add Custom Component">
-          <PlusCircle className="h-4 w-4" />
+        <Button variant="outline" size="sm" onClick={() => setIsAddCustomDialogOpen(true)} title="Add Custom Component">
+          <PlusCircle className="h-4 w-4 mr-2" />
+          Add Custom
         </Button>
       }
     >
@@ -48,20 +49,25 @@ export function ComponentLibraryPanel({ onAddComponent, customComponents, onAddC
           {allComponents.map((component) => (
             <div
               key={component.id}
-              className="flex items-center justify-between p-2 border rounded-md hover:bg-accent hover:cursor-pointer active:cursor-grabbing"
+              className="flex items-center justify-between p-3 border rounded-md hover:bg-accent hover:shadow-md hover:cursor-pointer active:cursor-grabbing transition-all"
               onClick={() => handleAddComponentClick(component.defaultXmlSnippet, component.name)}
               title={`Click to add ${component.name}`}
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 {component.isCustom ? <Settings2 className="h-5 w-5 text-blue-500" /> : <component.icon className="h-5 w-5 text-primary" />}
-                <span className="text-sm">{component.name}</span>
+                <span className="text-sm font-medium">{component.name}</span>
               </div>
               <GripVertical className="h-5 w-5 text-muted-foreground opacity-50 hover:opacity-100" />
             </div>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground mt-4">
-          Click a component to add its XML snippet. Custom components are marked with a settings icon.
+        {allComponents.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-8">
+            No components available. Add custom components to get started.
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground mt-4 p-2 bg-muted rounded-md">
+          Click a component to add its XML snippet to the editor. Custom components are marked with a <Settings2 className="inline h-3 w-3 text-blue-500" /> icon.
         </p>
       </ScrollArea>
        <AddCustomComponentDialog

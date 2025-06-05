@@ -1,6 +1,6 @@
 
 import type { AndroidComponentDefinition } from './types';
-import { Type, Image as ImageIcon, BoxSelect, Maximize, Columns, RectangleHorizontal, Rows, CheckSquare, SlidersHorizontal, RadioTower, ToggleLeft } from 'lucide-react'; // Using BoxSelect for Layouts, Maximize for ConstraintLayout, Columns for LinearLayout
+import { Type, Image as ImageIcon, BoxSelect, Maximize, Columns, RectangleHorizontal, Rows, CheckSquare, SlidersHorizontal, RadioTower, ToggleLeft, Server, CreditCard } from 'lucide-react'; // Using BoxSelect for Layouts, Maximize for ConstraintLayout, Columns for LinearLayout, Server for ProgressBar, CreditCard for CardView
 
 export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
@@ -39,7 +39,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'edittext',
     name: 'EditText',
-    icon: Type, // Consider a specific icon like 'FormInput' if added
+    icon: Type, 
     defaultXmlSnippet: `<EditText
     android:id="@+id/new_edittext"
     android:layout_width="match_parent"
@@ -90,7 +90,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'radiogroup',
     name: 'RadioGroup',
-    icon: Rows, // Changed from List
+    icon: Rows, 
     defaultXmlSnippet: `<RadioGroup
     android:id="@+id/new_radiogroup"
     android:layout_width="wrap_content"
@@ -115,16 +115,16 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
     },
   },
   {
-    id: 'switch',
+    id: 'switch_widget', // Renamed to avoid conflict with HTML switch
     name: 'Switch',
     icon: ToggleLeft,
     defaultXmlSnippet: `<Switch
-    android:id="@+id/new_switch"
+    android:id="@+id/new_switch_widget"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="Switch Label" />`,
     defaultProperties: {
-      'android:id': '@+id/new_switch',
+      'android:id': '@+id/new_switch_widget',
       'android:layout_width': 'wrap_content',
       'android:layout_height': 'wrap_content',
       'android:text': 'Switch Label',
@@ -149,6 +149,53 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
     },
   },
   {
+    id: 'progressbar',
+    name: 'ProgressBar',
+    icon: Server, // Using Server icon as a placeholder for progress
+    defaultXmlSnippet: `<ProgressBar
+    android:id="@+id/new_progressbar"
+    style="?android:attr/progressBarStyleHorizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:max="100"
+    android:progress="50" />`,
+    defaultProperties: {
+      'android:id': '@+id/new_progressbar',
+      'style': '?android:attr/progressBarStyleHorizontal',
+      'android:layout_width': 'match_parent',
+      'android:layout_height': 'wrap_content',
+      'android:max': '100',
+      'android:progress': '50',
+    },
+  },
+  {
+    id: 'cardview',
+    name: 'CardView (Basic)',
+    icon: CreditCard,
+    defaultXmlSnippet: `<androidx.cardview.widget.CardView
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/new_cardview"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    card_view:cardCornerRadius="4dp"
+    card_view:cardElevation="4dp"
+    card_view:cardUseCompatPadding="true">
+    \n    <!-- Add child views here -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Content in Card"
+        android:padding="16dp"/>\n
+</androidx.cardview.widget.CardView>`,
+    defaultProperties: {
+      'android:id': '@+id/new_cardview',
+      'android:layout_width': 'match_parent',
+      'android:layout_height': 'wrap_content',
+      'card_view:cardCornerRadius': '4dp',
+      'card_view:cardElevation': '4dp',
+    },
+  },
+  {
     id: 'linearlayout_vertical',
     name: 'LinearLayout (Vertical)',
     icon: Columns,
@@ -168,7 +215,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'linearlayout_horizontal',
     name: 'LinearLayout (Horizontal)',
-    icon: Rows, // Re-using for horizontal row-like structure
+    icon: Rows, 
     defaultXmlSnippet: `<LinearLayout
     android:id="@+id/new_linearlayout_horizontal"
     android:layout_width="match_parent"
@@ -200,7 +247,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'constraintlayout',
     name: 'ConstraintLayout',
-    icon: Maximize, // Representing constraints
+    icon: Maximize, 
     defaultXmlSnippet: `<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/new_constraintlayout"
@@ -216,10 +263,10 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
 ];
 
 export const SCREEN_PREVIEWS = [
-  { id: 'default', name: 'Default (Resizable)', width: '100%', height: '100%' },
-  { id: 'pixel_7', name: 'Pixel 7 (1080x2400)', width: '360px', height: '800px' }, // Approx dp values
-  { id: 'pixel_tablet', name: 'Pixel Tablet (2560x1600)', width: '1024px', height: '640px' }, // Approx dp values
-  { id: 'small_phone', name: 'Small Phone (720x1280)', width: '320px', height: '570px' },
+  { id: 'default', name: 'Default (Resizable)', width_val: '100%', height_val: '100%' },
+  { id: 'pixel_7', name: 'Pixel 7', width_val: '360px', height_val: '800px' }, 
+  { id: 'pixel_tablet', name: 'Pixel Tablet', width_val: '1024px', height_val: '640px' },
+  { id: 'small_phone', name: 'Small Phone', width_val: '320px', height_val: '570px' },
 ];
 
 export const INITIAL_XML_CODE = `<?xml version="1.0" encoding="utf-8"?>
