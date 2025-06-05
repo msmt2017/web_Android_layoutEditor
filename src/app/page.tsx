@@ -19,6 +19,7 @@ import {
   SidebarContent,
   SidebarInset,
 } from '@/components/ui/sidebar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Basic XML manipulation (very simplified, not robust for complex XML)
 const updateAttributeInXml = (xml: string, elementId: string, attribute: string, newValue: string): string => {
@@ -45,11 +46,11 @@ const addSnippetToXml = (currentXml: string, snippet: string): string => {
 
   if (insertIndex !== -1) {
     const indentMatch = currentXml.substring(0, insertIndex).match(/\n(\s*)/g);
-    const baseIndent = indentMatch ? indentMatch[indentMatch.length-1].substring(1) : "    "; 
+    const baseIndent = indentMatch ? indentMatch[indentMatch.length-1].substring(1) : "    ";
     const indentedSnippet = snippet.split('\n').map(line => `${baseIndent}    ${line}`).join('\n');
     return `${currentXml.substring(0, insertIndex)}${indentedSnippet}\n${baseIndent}${currentXml.substring(insertIndex)}`;
   }
-  
+
   return `${currentXml}\n${snippet}`;
 };
 
@@ -61,6 +62,7 @@ export default function AndroVizPage() {
   const [isLoadingOptimizations, setIsLoadingOptimizations] = useState<boolean>(false);
   const [selectedScreenId, setSelectedScreenId] = useState<string>(SCREEN_PREVIEWS[0].id);
   const [selectedComponent, setSelectedComponent] = useState<SelectedComponentInfo | null>(null);
+  const [activeEditorTab, setActiveEditorTab] = useState<string>("visual");
 
   const { toast } = useToast();
 
@@ -103,8 +105,8 @@ export default function AndroVizPage() {
       const type = elementId.includes('text') ? 'TextView' : elementId.includes('button') ? 'Button' : 'View';
       setSelectedComponent({
         id: elementId,
-        type: type, 
-        attributes: {}, 
+        type: type,
+        attributes: {},
       });
       toast({ title: "Element Selected (Mock)", description: `Mock element '${elementId}' selected.` });
     } else {
@@ -139,9 +141,19 @@ export default function AndroVizPage() {
         <AppHeader />
         <main className="flex flex-1 overflow-hidden p-4 gap-4">
           {/* Center Column */}
-          <div className="flex flex-col flex-1 space-y-4 min-w-0">
-            <VisualEditorPanel xmlCode={xmlCode} selectedScreenId={selectedScreenId} onSelectElement={handleSelectElement} />
-            <XmlEditorPanel xmlCode={xmlCode} setXmlCode={setXmlCode} />
+          <div className="flex flex-col flex-1 min-w-0">
+            <Tabs value={activeEditorTab} onValueChange={setActiveEditorTab} className="flex flex-col flex-1 h-full">
+              <TabsList className="mb-2 self-start">
+                <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+                <TabsTrigger value="xml">XML Editor</TabsTrigger>
+              </TabsList>
+              <TabsContent value="visual" className="flex-1 overflow-hidden m-0">
+                <VisualEditorPanel xmlCode={xmlCode} selectedScreenId={selectedScreenId} onSelectElement={handleSelectElement} />
+              </TabsContent>
+              <TabsContent value="xml" className="flex-1 overflow-hidden m-0">
+                <XmlEditorPanel xmlCode={xmlCode} setXmlCode={setXmlCode} />
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Right Column */}

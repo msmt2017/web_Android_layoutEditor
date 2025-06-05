@@ -1,3 +1,4 @@
+
 'use client';
 
 import { PanelWrapper } from '@/components/panels/panel-wrapper';
@@ -12,7 +13,7 @@ interface XmlEditorPanelProps {
 
 export function XmlEditorPanel({ xmlCode, setXmlCode }: XmlEditorPanelProps) {
   return (
-    <PanelWrapper title="XML Code Editor" icon={Code2} className="flex-1" contentClassName="p-0 flex flex-col">
+    <PanelWrapper title="XML Code Editor" icon={Code2} className="h-full" contentClassName="p-0 flex flex-col">
       <Textarea
         value={xmlCode}
         onChange={(e) => setXmlCode(e.target.value)}

@@ -1,8 +1,8 @@
+
 'use client';
 
 import { PanelWrapper } from '@/components/panels/panel-wrapper';
-import { Eye }
-from 'lucide-react';
+import { Eye } from 'lucide-react';
 import { SCREEN_PREVIEWS } from '@/features/androviz/constants';
 
 interface VisualEditorPanelProps {
@@ -20,10 +20,16 @@ export function VisualEditorPanel({ xmlCode, selectedScreenId, onSelectElement }
   };
   
   return (
-    <PanelWrapper title="Visual Editor" icon={Eye} className="flex-1" contentClassName="flex flex-col items-center justify-center bg-muted/30">
+    <PanelWrapper title="Visual Editor" icon={Eye} className="h-full" contentClassName="flex flex-col items-center justify-center bg-muted/30">
         <div 
-          className="bg-background shadow-lg overflow-auto border-2 border-dashed border-primary/50 rounded-lg p-2 transition-all duration-300 ease-in-out"
-          style={{ width: selectedScreen.width, height: selectedScreen.height, maxWidth: '100%', maxHeight: '100%' }}
+          className="bg-background shadow-lg overflow-auto border-2 border-dashed border-primary/50 rounded-lg p-2 transition-all duration-300 ease-in-out w-full h-full"
+          style={{ 
+            // Use 100% if default, otherwise use specific screen dimensions
+            width: selectedScreen.id === 'default' ? '100%' : selectedScreen.width, 
+            height: selectedScreen.id === 'default' ? '100%' : selectedScreen.height, 
+            maxWidth: '100%', 
+            maxHeight: '100%' 
+          }}
           onClick={() => handleMockElementClick('welcome_text')} // Mock selection
           title="Click to select 'welcome_text' (mock)"
         >
