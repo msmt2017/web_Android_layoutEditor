@@ -262,11 +262,28 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   },
 ];
 
-export const SCREEN_PREVIEWS = [
+export interface ScreenDefinition {
+  id: string;
+  name: string;
+  width_val: string; // e.g., '360px', '100%'
+  height_val: string; // e.g., '800px', '100%'
+  isCustom?: boolean;
+}
+
+
+export const SCREEN_PREVIEWS: ScreenDefinition[] = [
   { id: 'default', name: 'Default (Resizable)', width_val: '100%', height_val: '100%' },
-  { id: 'pixel_7', name: 'Pixel 7', width_val: '360px', height_val: '800px' }, 
-  { id: 'pixel_tablet', name: 'Pixel Tablet', width_val: '1024px', height_val: '640px' },
-  { id: 'small_phone', name: 'Small Phone', width_val: '320px', height_val: '570px' },
+  { id: 'custom', name: 'Custom', width_val: '360px', height_val: '640px', isCustom: true }, // Placeholder for custom
+  { id: 'pixel_5', name: 'Pixel 5 (Phone)', width_val: '393px', height_val: '851px' },
+  { id: 'pixel_7_pro', name: 'Pixel 7 Pro (Phone)', width_val: '412px', height_val: '892px' },
+  { id: 'galaxy_s20_ultra', name: 'Galaxy S20 Ultra (Phablet)', width_val: '412px', height_val: '915px' },
+  { id: 'iphone_12_pro', name: 'iPhone 12 Pro (Phone)', width_val: '390px', height_val: '844px' },
+  { id: 'surface_duo', name: 'Surface Duo (Foldable)', width_val: '540px', height_val: '720px' }, // (per screen)
+  { id: 'galaxy_fold', name: 'Galaxy Fold (Foldable)', width_val: '280px', height_val: '653px' }, // (folded state)
+  { id: 'ipad_mini', name: 'iPad Mini (Tablet)', width_val: '768px', height_val: '1024px' },
+  { id: 'pixel_tablet', name: 'Pixel Tablet (Tablet)', width_val: '1024px', height_val: '640px' }, // Landscape by default usually
+  { id: 'nexus_10', name: 'Nexus 10 (Tablet)', width_val: '1280px', height_val: '800px'},
+  { id: 'small_phone_legacy', name: 'Small Phone (Legacy)', width_val: '320px', height_val: '568px' },
 ];
 
 export const INITIAL_XML_CODE = `<?xml version="1.0" encoding="utf-8"?>

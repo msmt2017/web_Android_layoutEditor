@@ -30,3 +30,12 @@ export interface SelectedComponentInfo {
   type: string; // e.g., "Button", "TextView"
   attributes: Record<string, string>; // Current attributes from XML (or defaults)
 }
+
+export interface ScreenDefinition {
+  id: string;
+  name: string;
+  width_val: string;
+  height_val: string;
+  isCustom?: boolean;
+}
+```
