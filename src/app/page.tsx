@@ -8,9 +8,10 @@ import { VisualEditorPanel } from '@/components/editor/visual-editor-panel';
 import { XmlEditorPanel } from '@/components/editor/xml-editor-panel';
 import { PropertyEditorPanel } from '@/components/panels/property-editor-panel';
 import { OptimizationToolPanel } from '@/components/panels/optimization-tool-panel';
+import { SettingsPanel } from '@/components/panels/settings-panel';
 import { suggestLayoutOptimizations } from '@/ai/flows/suggest-layout-optimizations';
 import { useToast } from "@/hooks/use-toast";
-import type { SelectedComponentInfo, CustomComponentDefinition } from '@/features/androviz/types';
+import type { SelectedComponentInfo, CustomComponentDefinition, ScreenDefinition } from '@/features/androviz/types';
 import { INITIAL_XML_CODE, SCREEN_PREVIEWS } from '@/features/androviz/constants';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -80,10 +81,20 @@ export default function AndroVizPage() {
   const [userCodingStyle, setUserCodingStyle] = useState<string>('');
   const [optimizationSuggestions, setOptimizationSuggestions] = useState<string | null>(null);
   const [isLoadingOptimizations, setIsLoadingOptimizations] = useState<boolean>(false);
+  
   const [selectedScreenId, setSelectedScreenId] = useState<string>(SCREEN_PREVIEWS[0].id);
+  const [currentPreviewWidth, setCurrentPreviewWidth] = useState<string>(SCREEN_PREVIEWS[0].width_val);
+  const [currentPreviewHeight, setCurrentPreviewHeight] = useState<string>(SCREEN_PREVIEWS[0].height_val);
+  const [customWidthInput, setCustomWidthInput] = useState<string>('360px');
+  const [customHeightInput, setCustomHeightInput] = useState<string>('640px');
+
   const [selectedComponent, setSelectedComponent] = useState<SelectedComponentInfo | null>(null);
   const [activeMainTab, setActiveMainTab] = useState<string>("visual");
   const [customComponents, setCustomComponents] = useState<CustomComponentDefinition[]>([]);
+
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(false);
+  const [autoSaveInterval, setAutoSaveInterval] = useState<number>(3000);
+
 
   const { toast } = useToast();
 
@@ -131,7 +142,7 @@ export default function AndroVizPage() {
 
   const handleSelectElement = useCallback((elementId: string | null) => {
     if (elementId) {
-      let type = 'View'; // Default
+      let type = 'View'; 
       const match = xmlCode.match(new RegExp(`<(\\w+).*?android:id="@+id/${elementId}"`));
       if (match && match[1]) {
         type = match[1];
@@ -160,8 +171,39 @@ export default function AndroVizPage() {
 
   const handleAddComponent = useCallback((xmlSnippet: string) => {
     setXmlCode(prevXml => addSnippetToXml(prevXml, xmlSnippet));
-    setActiveMainTab("xml"); // Switch to XML editor to see the change
+    setActiveMainTab("xml"); 
   }, []);
+
+  const handleScreenSelection = useCallback((screenId: string) => {
+    setSelectedScreenId(screenId);
+    const screen = SCREEN_PREVIEWS.find(s => s.id === screenId);
+    if (screen && !screen.isCustom) {
+      setCurrentPreviewWidth(screen.width_val);
+      setCurrentPreviewHeight(screen.height_val);
+    } else if (screenId === 'custom' && screen) {
+      setCurrentPreviewWidth(customWidthInput);
+      setCurrentPreviewHeight(customHeightInput);
+    }
+  }, [customWidthInput, customHeightInput]);
+
+  const handleApplyCustomResolution = useCallback(() => {
+    if (!customWidthInput.trim() || !customHeightInput.trim()) {
+      toast({
+        title: 'Invalid Dimensions',
+        description: 'Please enter valid width and height for custom resolution.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    setSelectedScreenId('custom');
+    setCurrentPreviewWidth(customWidthInput);
+    setCurrentPreviewHeight(customHeightInput);
+    toast({
+      title: 'Custom Resolution Applied',
+      description: `Preview set to ${customWidthInput} x ${customHeightInput}.`,
+    });
+  }, [customWidthInput, customHeightInput, toast]);
+
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -173,14 +215,16 @@ export default function AndroVizPage() {
           <TabsTrigger value="components">Component Library</TabsTrigger>
           <TabsTrigger value="properties">Property Editor</TabsTrigger>
           <TabsTrigger value="optimize">Layout Optimization</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
         </TabsList>
 
         <TabsContent value="visual" className="flex-1 overflow-y-auto p-4 m-0">
           <VisualEditorPanel 
             xmlCode={xmlCode} 
-            selectedScreenId={selectedScreenId} 
+            previewWidth={currentPreviewWidth}
+            previewHeight={currentPreviewHeight}
+            selectedScreenId={selectedScreenId}
             onSelectElement={handleSelectElement}
-            setSelectedScreenId={setSelectedScreenId}
           />
         </TabsContent>
         <TabsContent value="xml" className="flex-1 overflow-y-auto p-0 m-0">
@@ -204,6 +248,21 @@ export default function AndroVizPage() {
             optimizationSuggestions={optimizationSuggestions}
             isLoading={isLoadingOptimizations}
             onOptimize={handleOptimizeLayout}
+          />
+        </TabsContent>
+         <TabsContent value="settings" className="flex-1 overflow-y-auto p-4 m-0">
+          <SettingsPanel
+            selectedScreenId={selectedScreenId}
+            onScreenSelect={handleScreenSelection}
+            customWidthInput={customWidthInput}
+            setCustomWidthInput={setCustomWidthInput}
+            customHeightInput={customHeightInput}
+            setCustomHeightInput={setCustomHeightInput}
+            onApplyCustomResolution={handleApplyCustomResolution}
+            autoSaveEnabled={autoSaveEnabled}
+            setAutoSaveEnabled={setAutoSaveEnabled}
+            autoSaveInterval={autoSaveInterval}
+            setAutoSaveInterval={setAutoSaveInterval}
           />
         </TabsContent>
       </Tabs>
