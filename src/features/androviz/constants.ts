@@ -1,6 +1,6 @@
 
-import type { AndroidComponentDefinition } from './types';
-import { Type, Image as ImageIcon, BoxSelect, Maximize, Columns, RectangleHorizontal, Rows, CheckSquare, SlidersHorizontal, RadioTower, ToggleLeft, Server, CreditCard } from 'lucide-react'; // Using BoxSelect for Layouts, Maximize for ConstraintLayout, Columns for LinearLayout, Server for ProgressBar, CreditCard for CardView
+import type { AndroidComponentDefinition, ScreenDefinition } from './types';
+import { Type, Image as ImageIcon, BoxSelect, Maximize, Columns, RectangleHorizontal, Rows, CheckSquare, SlidersHorizontal, RadioTower, ToggleLeft, Server, CreditCard, Smartphone, Tablet, Watch, FoldVertical, Settings, DraftingCompass } from 'lucide-react';
 
 export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
@@ -39,7 +39,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'edittext',
     name: 'EditText',
-    icon: Type, 
+    icon: Type, // Can use a more specific icon if available, reusing Type for now
     defaultXmlSnippet: `<EditText
     android:id="@+id/new_edittext"
     android:layout_width="match_parent"
@@ -88,9 +88,25 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
     },
   },
   {
+    id: 'radiobutton',
+    name: 'RadioButton',
+    icon: RadioTower, // Re-using for individual radio button for clarity
+    defaultXmlSnippet: `<RadioButton
+    android:id="@+id/new_radiobutton"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Radio Option"/>`,
+    defaultProperties: {
+      'android:id': '@+id/new_radiobutton',
+      'android:layout_width': 'wrap_content',
+      'android:layout_height': 'wrap_content',
+      'android:text': 'Radio Option',
+    },
+  },
+  {
     id: 'radiogroup',
     name: 'RadioGroup',
-    icon: Rows, 
+    icon: Rows, // Using Rows icon as a stand-in for a group of items
     defaultXmlSnippet: `<RadioGroup
     android:id="@+id/new_radiogroup"
     android:layout_width="wrap_content"
@@ -115,7 +131,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
     },
   },
   {
-    id: 'switch_widget', // Renamed to avoid conflict with HTML switch
+    id: 'switch_widget', // Renamed from 'switch' to avoid conflict with React Switch component if used directly
     name: 'Switch',
     icon: ToggleLeft,
     defaultXmlSnippet: `<Switch
@@ -151,7 +167,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'progressbar',
     name: 'ProgressBar',
-    icon: Server, // Using Server icon as a placeholder for progress
+    icon: Server, // Using Server icon as a stand-in for ProgressBar
     defaultXmlSnippet: `<ProgressBar
     android:id="@+id/new_progressbar"
     style="?android:attr/progressBarStyleHorizontal"
@@ -169,9 +185,31 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
     },
   },
   {
+    id: 'scrollview',
+    name: 'ScrollView',
+    icon: FoldVertical, // Using FoldVertical for ScrollView
+    defaultXmlSnippet: `<ScrollView
+    android:id="@+id/new_scrollview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    \n    <!-- Add one child view here, typically a LinearLayout -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">\n
+        <!-- Content goes here -->\n
+    </LinearLayout>\n
+</ScrollView>`,
+    defaultProperties: {
+      'android:id': '@+id/new_scrollview',
+      'android:layout_width': 'match_parent',
+      'android:layout_height': 'match_parent',
+    },
+  },
+  {
     id: 'cardview',
     name: 'CardView (Basic)',
-    icon: CreditCard,
+    icon: CreditCard, // Using CreditCard for CardView
     defaultXmlSnippet: `<androidx.cardview.widget.CardView
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:id="@+id/new_cardview"
@@ -215,7 +253,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'linearlayout_horizontal',
     name: 'LinearLayout (Horizontal)',
-    icon: Rows, 
+    icon: Rows,
     defaultXmlSnippet: `<LinearLayout
     android:id="@+id/new_linearlayout_horizontal"
     android:layout_width="match_parent"
@@ -247,7 +285,7 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   {
     id: 'constraintlayout',
     name: 'ConstraintLayout',
-    icon: Maximize, 
+    icon: Maximize,
     defaultXmlSnippet: `<androidx.constraintlayout.widget.ConstraintLayout
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/new_constraintlayout"
@@ -262,28 +300,28 @@ export const ANDROID_COMPONENTS: AndroidComponentDefinition[] = [
   },
 ];
 
-export interface ScreenDefinition {
-  id: string;
-  name: string;
-  width_val: string; // e.g., '360px', '100%'
-  height_val: string; // e.g., '800px', '100%'
-  isCustom?: boolean;
-}
-
 
 export const SCREEN_PREVIEWS: ScreenDefinition[] = [
-  { id: 'default', name: 'Default (Resizable)', width_val: '100%', height_val: '100%' },
-  { id: 'custom', name: 'Custom', width_val: '360px', height_val: '640px', isCustom: true }, // Placeholder for custom
-  { id: 'pixel_5', name: 'Pixel 5 (Phone)', width_val: '393px', height_val: '851px' },
-  { id: 'pixel_7_pro', name: 'Pixel 7 Pro (Phone)', width_val: '412px', height_val: '892px' },
-  { id: 'galaxy_s20_ultra', name: 'Galaxy S20 Ultra (Phablet)', width_val: '412px', height_val: '915px' },
-  { id: 'iphone_12_pro', name: 'iPhone 12 Pro (Phone)', width_val: '390px', height_val: '844px' },
-  { id: 'surface_duo', name: 'Surface Duo (Foldable)', width_val: '540px', height_val: '720px' }, // (per screen)
-  { id: 'galaxy_fold', name: 'Galaxy Fold (Foldable)', width_val: '280px', height_val: '653px' }, // (folded state)
-  { id: 'ipad_mini', name: 'iPad Mini (Tablet)', width_val: '768px', height_val: '1024px' },
-  { id: 'pixel_tablet', name: 'Pixel Tablet (Tablet)', width_val: '1024px', height_val: '640px' }, // Landscape by default usually
-  { id: 'nexus_10', name: 'Nexus 10 (Tablet)', width_val: '1280px', height_val: '800px'},
-  { id: 'small_phone_legacy', name: 'Small Phone (Legacy)', width_val: '320px', height_val: '568px' },
+  { id: 'default', name: 'Default (Resizable)', icon: Smartphone, width_val: '100%', height_val: '100%' },
+  { id: 'custom', name: 'Custom Dimensions', icon: Settings, width_val: '360px', height_val: '640px', isCustom: true },
+  // Phones
+  { id: 'pixel_5', name: 'Pixel 5', icon: Smartphone, width_val: '393px', height_val: '851px' },
+  { id: 'pixel_7_pro', name: 'Pixel 7 Pro', icon: Smartphone, width_val: '412px', height_val: '892px' },
+  { id: 'galaxy_s20_ultra', name: 'Galaxy S20 Ultra', icon: Smartphone, width_val: '412px', height_val: '915px' },
+  { id: 'iphone_12_pro', name: 'iPhone 12 Pro (Illustrative)', icon: Smartphone, width_val: '390px', height_val: '844px' },
+  { id: 'small_phone_legacy', name: 'Small Phone (Legacy)', icon: Smartphone, width_val: '320px', height_val: '568px' },
+  // Foldables
+  { id: 'surface_duo', name: 'Surface Duo (Folded)', icon: FoldVertical, width_val: '540px', height_val: '720px' },
+  { id: 'galaxy_fold', name: 'Galaxy Fold (Folded)', icon: FoldVertical, width_val: '280px', height_val: '653px' },
+  // Tablets
+  { id: 'ipad_mini', name: 'iPad Mini (Illustrative)', icon: Tablet, width_val: '768px', height_val: '1024px' },
+  { id: 'pixel_tablet', name: 'Pixel Tablet', icon: Tablet, width_val: '1024px', height_val: '640px' }, // Usually landscape
+  { id: 'nexus_10', name: 'Nexus 10', icon: Tablet, width_val: '1280px', height_val: '800px'},
+  // Wear OS / Smartwatches
+  { id: 'wear_os_small_round', name: 'Wear OS Small Round', icon: Watch, width_val: '384px', height_val: '384px' }, // e.g. 1.2" at 320 PPI
+  { id: 'wear_os_large_round', name: 'Wear OS Large Round', icon: Watch, width_val: '454px', height_val: '454px' }, // e.g. 1.4" at 324 PPI
+  { id: 'wear_os_square', name: 'Wear OS Square', icon: Watch, width_val: '320px', height_val: '320px' }, // Older square devices
+  { id: 'wear_os_rect', name: 'Wear OS Rectangular', icon: Watch, width_val: '320px', height_val: '360px'}, // Some rectangular watches
 ];
 
 export const INITIAL_XML_CODE = `<?xml version="1.0" encoding="utf-8"?>
@@ -301,7 +339,7 @@ export const INITIAL_XML_CODE = `<?xml version="1.0" encoding="utf-8"?>
         android:layout_height="wrap_content"
         android:text="Welcome to AndroViz!"
         android:textSize="24sp"
-        android:textColor="#FF6A5ACD" 
+        android:textColor="#FF6A5ACD"
         android:padding="16dp"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="50dp"/>
@@ -319,7 +357,7 @@ export const INITIAL_XML_CODE = `<?xml version="1.0" encoding="utf-8"?>
         android:id="@+id/placeholder_image"
         android:layout_width="150dp"
         android:layout_height="150dp"
-        android:src="@drawable/placeholder_icon"
+        android:src="@drawable/placeholder_icon" 
         android:layout_below="@id/action_button"
         android:layout_centerHorizontal="true"
         android:layout_marginTop="30dp"

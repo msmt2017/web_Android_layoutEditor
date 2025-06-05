@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { AppHeader } from '@/components/layout/app-header';
 import { ComponentLibraryPanel } from '@/components/panels/component-library-panel';
 import { VisualEditorPanel } from '@/components/editor/visual-editor-panel';
@@ -9,13 +9,14 @@ import { XmlEditorPanel } from '@/components/editor/xml-editor-panel';
 import { PropertyEditorPanel } from '@/components/panels/property-editor-panel';
 import { OptimizationToolPanel } from '@/components/panels/optimization-tool-panel';
 import { SettingsPanel } from '@/components/panels/settings-panel';
+import { BlueprintPanel } from '@/components/editor/blueprint-panel'; // Placeholder for Blueprint
 import { suggestLayoutOptimizations } from '@/ai/flows/suggest-layout-optimizations';
 import { useToast } from "@/hooks/use-toast";
 import type { SelectedComponentInfo, CustomComponentDefinition, ScreenDefinition } from '@/features/androviz/types';
 import { INITIAL_XML_CODE, SCREEN_PREVIEWS } from '@/features/androviz/constants';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Download } from 'lucide-react';
 
-// Basic XML manipulation (very simplified, not robust for complex XML)
 const updateAttributeInXml = (xml: string, elementId: string, attribute: string, newValue: string): string => {
   const regex = new RegExp(`(<\\w+.*?android:id="@+id/${elementId}".*?${attribute}=")(.*?)(".*?>)`, 's');
   if (xml.match(regex)) {
@@ -32,12 +33,12 @@ const updateAttributeInXml = (xml: string, elementId: string, attribute: string,
 const addSnippetToXml = (currentXml: string, snippet: string): string => {
   const layoutEndTags = ['</RelativeLayout>', '</LinearLayout>', '</androidx.constraintlayout.widget.ConstraintLayout>', '</ScrollView>', '</FrameLayout>', '</androidx.cardview.widget.CardView>'];
   let insertIndex = -1;
-  let bestTagIndent = "    "; 
+  let bestTagIndent = "    ";
 
   for (const tag of layoutEndTags) {
     const lastIndex = currentXml.lastIndexOf(tag);
     if (lastIndex !== -1) {
-      if (lastIndex > insertIndex) { 
+      if (lastIndex > insertIndex) {
         insertIndex = lastIndex;
         const beforeTag = currentXml.substring(0, insertIndex);
         const lines = beforeTag.split('\n');
@@ -49,7 +50,7 @@ const addSnippetToXml = (currentXml: string, snippet: string): string => {
       }
     }
   }
-  
+
   if (insertIndex === -1) {
     const rootCloseMatch = currentXml.match(/<\/(\w+)\s*>$/);
     if (rootCloseMatch) {
@@ -69,7 +70,7 @@ const addSnippetToXml = (currentXml: string, snippet: string): string => {
     const indentedSnippet = snippetLines.map(line => `${bestTagIndent}    ${line}`).join('\n');
     return `${currentXml.substring(0, insertIndex)}${indentedSnippet}\n${bestTagIndent}${currentXml.substring(insertIndex)}`;
   }
-  
+
   const snippetLines = snippet.trim().split('\n');
   const indentedSnippet = snippetLines.map(line => `    ${line}`).join('\n');
   return `${currentXml}\n${indentedSnippet}`;
@@ -81,7 +82,7 @@ export default function AndroVizPage() {
   const [userCodingStyle, setUserCodingStyle] = useState<string>('');
   const [optimizationSuggestions, setOptimizationSuggestions] = useState<string | null>(null);
   const [isLoadingOptimizations, setIsLoadingOptimizations] = useState<boolean>(false);
-  
+
   const [selectedScreenId, setSelectedScreenId] = useState<string>(SCREEN_PREVIEWS[0].id);
   const [currentPreviewWidth, setCurrentPreviewWidth] = useState<string>(SCREEN_PREVIEWS[0].width_val);
   const [currentPreviewHeight, setCurrentPreviewHeight] = useState<string>(SCREEN_PREVIEWS[0].height_val);
@@ -142,18 +143,18 @@ export default function AndroVizPage() {
 
   const handleSelectElement = useCallback((elementId: string | null) => {
     if (elementId) {
-      let type = 'View'; 
+      let type = 'View';
       const match = xmlCode.match(new RegExp(`<(\\w+).*?android:id="@+id/${elementId}"`));
       if (match && match[1]) {
         type = match[1];
       } else if (elementId.includes('text')) type = 'TextView';
       else if (elementId.includes('button')) type = 'Button';
       else if (elementId.includes('image')) type = 'ImageView';
-      
+
       setSelectedComponent({
         id: elementId,
         type: type,
-        attributes: {}, 
+        attributes: {},
       });
        if (activeMainTab !== "properties") setActiveMainTab("properties");
     } else {
@@ -171,7 +172,7 @@ export default function AndroVizPage() {
 
   const handleAddComponent = useCallback((xmlSnippet: string) => {
     setXmlCode(prevXml => addSnippetToXml(prevXml, xmlSnippet));
-    setActiveMainTab("xml"); 
+    setActiveMainTab("xml");
   }, []);
 
   const handleScreenSelection = useCallback((screenId: string) => {
@@ -195,7 +196,7 @@ export default function AndroVizPage() {
       });
       return;
     }
-    setSelectedScreenId('custom');
+    setSelectedScreenId('custom'); // Ensure 'custom' is selected if applying custom
     setCurrentPreviewWidth(customWidthInput);
     setCurrentPreviewHeight(customHeightInput);
     toast({
@@ -204,13 +205,26 @@ export default function AndroVizPage() {
     });
   }, [customWidthInput, customHeightInput, toast]);
 
+  const handleSaveXml = useCallback(() => {
+    const blob = new Blob([xmlCode], { type: 'application/xml' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'layout.xml';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(link.href);
+    toast({ title: "XML Saved", description: "layout.xml has been downloaded." });
+  }, [xmlCode, toast]);
+
 
   return (
     <div className="flex flex-col h-screen bg-background">
-      <AppHeader />
+      <AppHeader onSave={handleSaveXml} />
       <Tabs value={activeMainTab} onValueChange={setActiveMainTab} className="flex flex-col flex-1 overflow-hidden">
         <TabsList className="mx-auto mt-2 mb-2 px-4 border-b-0 rounded-md">
           <TabsTrigger value="visual">Visual Editor</TabsTrigger>
+          <TabsTrigger value="blueprint">Blueprint</TabsTrigger>
           <TabsTrigger value="xml">XML Editor</TabsTrigger>
           <TabsTrigger value="components">Component Library</TabsTrigger>
           <TabsTrigger value="properties">Property Editor</TabsTrigger>
@@ -219,20 +233,23 @@ export default function AndroVizPage() {
         </TabsList>
 
         <TabsContent value="visual" className="flex-1 overflow-y-auto p-4 m-0">
-          <VisualEditorPanel 
-            xmlCode={xmlCode} 
+          <VisualEditorPanel
+            xmlCode={xmlCode}
             previewWidth={currentPreviewWidth}
             previewHeight={currentPreviewHeight}
             selectedScreenId={selectedScreenId}
             onSelectElement={handleSelectElement}
           />
         </TabsContent>
+        <TabsContent value="blueprint" className="flex-1 overflow-y-auto p-4 m-0">
+          <BlueprintPanel xmlCode={xmlCode} previewWidth={currentPreviewWidth} previewHeight={currentPreviewHeight} />
+        </TabsContent>
         <TabsContent value="xml" className="flex-1 overflow-y-auto p-0 m-0">
           <XmlEditorPanel xmlCode={xmlCode} setXmlCode={setXmlCode} />
         </TabsContent>
         <TabsContent value="components" className="flex-1 overflow-y-auto p-4 m-0">
-          <ComponentLibraryPanel 
-            onAddComponent={handleAddComponent} 
+          <ComponentLibraryPanel
+            onAddComponent={handleAddComponent}
             customComponents={customComponents}
             onAddCustomComponent={handleAddCustomComponent}
           />
