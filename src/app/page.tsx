@@ -11,7 +11,7 @@ import { PropertyEditorPanel } from '@/components/panels/property-editor-panel';
 import { OptimizationToolPanel } from '@/components/panels/optimization-tool-panel';
 import { suggestLayoutOptimizations } from '@/ai/flows/suggest-layout-optimizations';
 import { useToast } from "@/hooks/use-toast";
-import type { SelectedComponentInfo } from '@/features/androviz/types';
+import type { SelectedComponentInfo, AndroidComponentDefinition, CustomComponentDefinition } from '@/features/androviz/types';
 import { INITIAL_XML_CODE, SCREEN_PREVIEWS } from '@/features/androviz/constants';
 import {
   SidebarProvider,
@@ -20,6 +20,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PlusCircle } from 'lucide-react';
 
 // Basic XML manipulation (very simplified, not robust for complex XML)
 const updateAttributeInXml = (xml: string, elementId: string, attribute: string, newValue: string): string => {
@@ -36,22 +37,53 @@ const updateAttributeInXml = (xml: string, elementId: string, attribute: string,
 };
 
 const addSnippetToXml = (currentXml: string, snippet: string): string => {
-  const layoutEndTags = ['</RelativeLayout>', '</LinearLayout>', '</androidx.constraintlayout.widget.ConstraintLayout>'];
+  const layoutEndTags = ['</RelativeLayout>', '</LinearLayout>', '</androidx.constraintlayout.widget.ConstraintLayout>', '</ScrollView>', '</FrameLayout>'];
   let insertIndex = -1;
+  let bestTagIndent = "    "; // Default indent
 
   for (const tag of layoutEndTags) {
-    insertIndex = currentXml.lastIndexOf(tag);
-    if (insertIndex !== -1) break;
+    const lastIndex = currentXml.lastIndexOf(tag);
+    if (lastIndex !== -1) {
+      if (lastIndex > insertIndex) { // Prioritize deeper nesting if multiple layout tags exist
+        insertIndex = lastIndex;
+        // Try to determine indent from the line of the closing tag
+        const beforeTag = currentXml.substring(0, insertIndex);
+        const lines = beforeTag.split('\n');
+        const tagLine = lines[lines.length-1];
+        const indentMatch = tagLine.match(/^(\s*)/);
+        if (indentMatch && indentMatch[1]) {
+          bestTagIndent = indentMatch[1];
+        }
+      }
+    }
   }
+  
+  // Fallback if no common layout tags are found, try to insert before root closing tag
+  if (insertIndex === -1) {
+    const rootCloseMatch = currentXml.match(/<\/(\w+)\s*>$/);
+    if (rootCloseMatch) {
+        insertIndex = currentXml.lastIndexOf(rootCloseMatch[0]);
+         const beforeTag = currentXml.substring(0, insertIndex);
+        const lines = beforeTag.split('\n');
+        const tagLine = lines[lines.length-1];
+        const indentMatch = tagLine.match(/^(\s*)/);
+        if (indentMatch && indentMatch[1]) {
+          bestTagIndent = indentMatch[1];
+        }
+    }
+  }
+
 
   if (insertIndex !== -1) {
-    const indentMatch = currentXml.substring(0, insertIndex).match(/\n(\s*)/g);
-    const baseIndent = indentMatch ? indentMatch[indentMatch.length-1].substring(1) : "    ";
-    const indentedSnippet = snippet.split('\n').map(line => `${baseIndent}    ${line}`).join('\n');
-    return `${currentXml.substring(0, insertIndex)}${indentedSnippet}\n${baseIndent}${currentXml.substring(insertIndex)}`;
+    const snippetLines = snippet.trim().split('\n');
+    const indentedSnippet = snippetLines.map(line => `${bestTagIndent}    ${line}`).join('\n');
+    return `${currentXml.substring(0, insertIndex)}${indentedSnippet}\n${bestTagIndent}${currentXml.substring(insertIndex)}`;
   }
-
-  return `${currentXml}\n${snippet}`;
+  
+  // If still no suitable place, append at the end (less ideal)
+  const snippetLines = snippet.trim().split('\n');
+  const indentedSnippet = snippetLines.map(line => `    ${line}`).join('\n');
+  return `${currentXml}\n${indentedSnippet}`;
 };
 
 
@@ -63,8 +95,17 @@ export default function AndroVizPage() {
   const [selectedScreenId, setSelectedScreenId] = useState<string>(SCREEN_PREVIEWS[0].id);
   const [selectedComponent, setSelectedComponent] = useState<SelectedComponentInfo | null>(null);
   const [activeEditorTab, setActiveEditorTab] = useState<string>("visual");
+  const [customComponents, setCustomComponents] = useState<CustomComponentDefinition[]>([]);
 
   const { toast } = useToast();
+
+  const handleAddCustomComponent = useCallback((component: CustomComponentDefinition) => {
+    setCustomComponents(prev => [...prev, component]);
+    toast({
+      title: "Custom Component Added",
+      description: `${component.name} is now available in the library.`,
+    });
+  }, [toast]);
 
   const handleOptimizeLayout = useCallback(async () => {
     if (!xmlCode.trim()) {
@@ -102,23 +143,28 @@ export default function AndroVizPage() {
 
   const handleSelectElement = useCallback((elementId: string | null) => {
     if (elementId) {
-      const type = elementId.includes('text') ? 'TextView' : elementId.includes('button') ? 'Button' : 'View';
+      // This is a simplified mock. A real app would parse XML to get type and attributes.
+      let type = 'View';
+      if (elementId.includes('text')) type = 'TextView';
+      else if (elementId.includes('button')) type = 'Button';
+      else if (elementId.includes('image')) type = 'ImageView';
+      
       setSelectedComponent({
         id: elementId,
         type: type,
-        attributes: {},
+        attributes: {}, // Attributes would be parsed from XML in a real scenario
       });
-      toast({ title: "Element Selected (Mock)", description: `Mock element '${elementId}' selected.` });
+      // toast({ title: "Element Selected (Mock)", description: `Mock element '${elementId}' selected.` });
     } else {
       setSelectedComponent(null);
     }
-  }, [toast]);
+  }, []);
 
   const handlePropertyChange = useCallback((attribute: string, value: string) => {
     if (selectedComponent) {
       setXmlCode(prevXml => updateAttributeInXml(prevXml, selectedComponent.id, attribute, value));
       setSelectedComponent(prev => prev ? ({...prev, attributes: {...prev.attributes, [attribute]: value}}) : null);
-       toast({ title: "Property Changed (Mock)", description: `Attribute ${attribute} for ${selectedComponent.id} set to ${value}. (XML update is illustrative)` });
+       toast({ title: "Property Changed", description: `Attribute ${attribute} for ${selectedComponent.id} set to ${value}.` });
     }
   }, [selectedComponent, toast]);
 
@@ -131,7 +177,11 @@ export default function AndroVizPage() {
       <Sidebar side="left" collapsible="icon" variant="sidebar" className="border-r bg-card">
         <SidebarContent className="p-0">
           <div className="p-4 space-y-4 flex flex-col h-full">
-            <ComponentLibraryPanel onAddComponent={handleAddComponent} />
+            <ComponentLibraryPanel 
+              onAddComponent={handleAddComponent} 
+              customComponents={customComponents}
+              onAddCustomComponent={handleAddCustomComponent}
+            />
             <ScreenPreviewPanel selectedScreen={selectedScreenId} setSelectedScreen={setSelectedScreenId} />
           </div>
         </SidebarContent>

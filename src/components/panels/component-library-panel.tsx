@@ -1,23 +1,28 @@
+
 'use client';
 
+import { useState } from 'react';
 import { ANDROID_COMPONENTS } from '@/features/androviz/constants';
+import type { AndroidComponentDefinition, CustomComponentDefinition } from '@/features/androviz/types';
 import { PanelWrapper } from './panel-wrapper';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { GripVertical, LibrarySquare } from 'lucide-react';
+import { GripVertical, LibrarySquare, PlusCircle, Settings2 } from 'lucide-react'; // Added PlusCircle
 import { useToast } from '@/hooks/use-toast';
+import { AddCustomComponentDialog } from '@/components/dialogs/add-custom-component-dialog';
+
 
 interface ComponentLibraryPanelProps {
   onAddComponent: (xmlSnippet: string) => void;
+  customComponents: CustomComponentDefinition[];
+  onAddCustomComponent: (component: CustomComponentDefinition) => void;
 }
 
-export function ComponentLibraryPanel({ onAddComponent }: ComponentLibraryPanelProps) {
+export function ComponentLibraryPanel({ onAddComponent, customComponents, onAddCustomComponent }: ComponentLibraryPanelProps) {
   const { toast } = useToast();
+  const [isAddCustomDialogOpen, setIsAddCustomDialogOpen] = useState(false);
 
-  const handleDragStart = (event: React.DragEvent<HTMLDivElement>, snippet: string) => {
-    event.dataTransfer.setData('text/plain', snippet);
-    // In a real scenario, you'd set some state or use a library for drag effects.
-  };
+  const allComponents: AndroidComponentDefinition[] = [...ANDROID_COMPONENTS, ...customComponents];
 
   const handleAddComponentClick = (snippet: string, componentName: string) => {
     onAddComponent(snippet);
@@ -28,20 +33,27 @@ export function ComponentLibraryPanel({ onAddComponent }: ComponentLibraryPanelP
   };
 
   return (
-    <PanelWrapper title="Component Library" icon={LibrarySquare} className="h-full">
-      <ScrollArea className="h-full pr-2">
+    <PanelWrapper 
+      title="Component Library" 
+      icon={LibrarySquare} 
+      className="h-full flex flex-col"
+      action={
+        <Button variant="ghost" size="sm" onClick={() => setIsAddCustomDialogOpen(true)} title="Add Custom Component">
+          <PlusCircle className="h-4 w-4" />
+        </Button>
+      }
+    >
+      <ScrollArea className="flex-1 pr-2">
         <div className="space-y-2">
-          {ANDROID_COMPONENTS.map((component) => (
+          {allComponents.map((component) => (
             <div
               key={component.id}
-              // draggable // Draggability is illustrative, full implementation is complex.
-              // onDragStart={(e) => handleDragStart(e, component.defaultXmlSnippet)}
-              className="flex items-center justify-between p-2 border rounded-md hover:bg-accent hover:cursor-grab active:cursor-grabbing"
+              className="flex items-center justify-between p-2 border rounded-md hover:bg-accent hover:cursor-pointer active:cursor-grabbing"
               onClick={() => handleAddComponentClick(component.defaultXmlSnippet, component.name)}
               title={`Click to add ${component.name}`}
             >
               <div className="flex items-center gap-2">
-                <component.icon className="h-5 w-5 text-primary" />
+                {component.isCustom ? <Settings2 className="h-5 w-5 text-blue-500" /> : <component.icon className="h-5 w-5 text-primary" />}
                 <span className="text-sm">{component.name}</span>
               </div>
               <GripVertical className="h-5 w-5 text-muted-foreground opacity-50 hover:opacity-100" />
@@ -49,9 +61,14 @@ export function ComponentLibraryPanel({ onAddComponent }: ComponentLibraryPanelP
           ))}
         </div>
         <p className="text-xs text-muted-foreground mt-4">
-          Click a component to add its basic XML snippet to the editor. Drag and drop is illustrative.
+          Click a component to add its XML snippet. Custom components are marked with a settings icon.
         </p>
       </ScrollArea>
+       <AddCustomComponentDialog
+        isOpen={isAddCustomDialogOpen}
+        onOpenChange={setIsAddCustomDialogOpen}
+        onAddComponent={onAddCustomComponent}
+      />
     </PanelWrapper>
   );
 }
