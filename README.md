@@ -41,6 +41,9 @@ AndroViz aims to be a helpful companion for Android developers by:
 6.  Configure preview settings in the "Settings" tab.
 
 ---
+image:https://github.com/msmt2017/web_Android_layoutEditor/blob/master/Screenshot_2025-06-06-08-17-47-983_com.kiwibrowser.browser.png
+https://github.com/msmt2017/web_Android_layoutEditor/blob/master/Screenshot_2025-06-06-08-17-17-703_com.kiwibrowser.browser.png
+https://github.com/msmt2017/web_Android_layoutEditor/blob/master/Screenshot_2025-06-06-08-15-53-763_com.kiwibrowser.browser.png
 
 # AndroViz: AI 赋能的安卓布局编辑器 (中文说明)
 
