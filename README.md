@@ -32,7 +32,7 @@ AndroViz aims to be a helpful companion for Android developers by:
 
 ## Getting Started
 
-This application is designed to run within Firebase Studio.
+
 1.  The main interface is accessible via `src/app/page.tsx`.
 2.  Explore the different tabs: Visual Editor, Blueprint, XML Editor, Component Library, Property Editor, Layout Optimization, and Settings.
 3.  Modify XML in the "XML Editor" tab or use the "Property Editor" after (mock) selecting an element in the "Visual Preview".
@@ -75,7 +75,6 @@ AndroViz 旨在成为 Android 开发者的得力助手，通过以下方式：
 
 ## 如何开始
 
-此应用程序设计在 Firebase Studio 中运行。
 1.  主界面通过 `src/app/page.tsx` 访问。
 2.  探索不同的标签页：可视化编辑器 (Visual Editor)、蓝图 (Blueprint)、XML 编辑器 (XML Editor)、组件库 (Component Library)、属性编辑器 (Property Editor)、布局优化 (Layout Optimization) 和设置 (Settings)。
 3.  在“XML 编辑器”选项卡中修改 XML，或在“可视化预览”中（模拟）选择一个元素后使用“属性编辑器”。
